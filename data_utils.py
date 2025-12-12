@@ -171,5 +171,6 @@ def create_dataloaders(
     return (train_dataloader,
             val_dataloader,
             test_dataloader,
+            train_dataset,
             train_dataset.classes,
             train_dataset.class_to_idx)
