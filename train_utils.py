@@ -184,12 +184,6 @@ def train(model: torch.nn.Module,
 
     model.to(device)
 
-    try:
-        dummy_input, _ = next(iter(train_dataloader))
-        writer.add_graph(model, dummy_input.to(device))
-    except Exception as e:
-        print(f"TensorBoard Graph skipped: {e}")
-
     for epoch in tqdm(range(epochs), desc="Training Epochs"):
         
         train_loss, train_res = train_step(model=model,
