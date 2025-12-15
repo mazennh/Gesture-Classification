@@ -3,6 +3,7 @@ from torch import nn
 from typing import Tuple
 import torchvision.models as models
 import warnings
+import vgg
 
 warnings.filterwarnings("ignore")
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -93,7 +94,10 @@ def get_model(num_classes: int,
 
     # --- VGG ---
     elif architecture_name == 'VGG':
-        pass
+        print("Loading VGG19...")
+        model = vgg.VGG19(num_classes=num_classes)
+        vgg_feature_output = 512 * 7 * 7
+        model.classifier = _create_custom_head(in_features=vgg_feature_output, num_classes=num_classes)
 
     else:
         raise ValueError(f"Model '{architecture_name}' is not supported. Choose: ResNet, Inception V1, ViT, VGG.")
