@@ -73,7 +73,8 @@ def get_model(num_classes: int,
         print("Loading InceptionV1 (GoogLeNet)...")
         
         weights = models.GoogLeNet_Weights.DEFAULT
-        model = models.googlenet(weights=weights, aux_logits=False)
+        model = models.googlenet(weights=weights) 
+        model.aux_logits = False 
         
         for param in model.parameters():
             param.requires_grad = False

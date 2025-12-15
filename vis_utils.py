@@ -109,7 +109,6 @@ def data_verification(dataset: torch.utils.data.Dataset,
         img, label = dataset[idx]
 
         img = unnormalize(img)
-        img = img.clip(0, 1)
         img = img.permute(1, 2, 0).numpy()
 
         ax = plt.subplot(n_rows, n_cols, i + 1)
