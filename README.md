@@ -1,20 +1,24 @@
 # Hand Gesture Classification
 
 ## Project Overview
+
 This project implements a modular Deep Learning pipeline for classifying hand gestures using the **HAGRID (HAnd Gesture Recognition Image Dataset)**. It benchmarks multiple architectures (VGG, ViT, ResNet, InceptionV1) to analyze performance trade-offs.
 
 The system is designed with **MLOps best practices**:
+
 - **Modular Codebase:** Separated logic for data processing, model definitions, and training.
 - **Experiment Tracking:** Integrated TensorBoard logging (local & remote via Ngrok).
 - **Custom Data Pipeline:** Automated filtering, splitting, and loading of large-scale datasets.
 - **Hybrid Modeling:** Supports both custom implementations (VGG from scratch) and Transfer Learning.
 
 ## Key Features
+
 - **Data Sanity Checks:** implemented visualization pipelines to debug data augmentation strategies (e.g., ensuring `RandomErasing` does not occlude the Region of Interest/Hand).
 - **Model Benchmarking:** Comparative analysis of CNNs (VGG, Inception, ResNet) vs. Transformers (ViT).
 - **MLOps Workflow:** Modularized code, reproducibility checks, and remote monitoring.
 
 ## Project Structure
+
 ```text
 ├── notebooks/           # Jupyter Notebooks for Training & Testing
 ├── utils/               # Helper modules
@@ -28,16 +32,23 @@ The system is designed with **MLOps best practices**:
 ```
 
 ## Installation
-**1. Clone the Repository**
+
+### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/mazennh/Gesture-Classification.git
 cd Gesture-Classification
 ```
-**2. Install Dependencies**
+
+### 2. Install Dependencies
+
 ```bash
-pip install -r requirements.txt
+pip
+ install -r requirements.txt
 ```
-**3. Path Setup (For Notebooks/Colab)**
+
+### 3. Path Setup (For Notebooks/Colab)
+
 ```python
 import sys
 import os
@@ -45,13 +56,15 @@ sys.path.append(os.path.abspath("/path/to/Gesture-Classification"))
 ```
 
 ## Usage Workflow
-**1. Training Pipeline**
+
+### 1. Training Pipeline
 
 The training process handles data engineering (filtering/splitting) and model optimization.
 
 *Located in: `notebooks/model/train.ipynb`*
 
 **Key Steps:**
+
 1. **Data Filtering**: Extracts specific classes from the massive HAGRID dataset.
 2. **Splitting**: 80% Train, 10% Validation, 10% Test (Seed: 42).
 3. **Training**: Uses Adam Optimizer, StepLR Scheduler, and Early Stopping.
@@ -103,7 +116,8 @@ train_utils.train(
     best_model='vgg_best.pth'
 )
 ```
-**2. Testing & Monitoring Pipeline**
+
+### 2. Testing & Monitoring Pipeline
 
 The testing pipeline is designed to run on **deployment artifacts** (zipped weights and logs).
 
@@ -112,12 +126,14 @@ The testing pipeline is designed to run on **deployment artifacts** (zipped weig
 *Located in: `notebooks/model/test.ipynb`*
 
 **Key Steps:**
-1.  **Artifact Setup:** Unzips the training output (Split Data, Best Model, Logs).
-2.  **Data Reconstruction:** Re-creates the `test_dataloader` from the split directory.
-3.  **Inference:** Loads the saved model weights and evaluates metrics.
-4.  **Monitoring:** Visualizes logs via TensorBoard (local or Ngrok).
+
+1. **Artifact Setup:** Unzips the training output (Split Data, Best Model, Logs).
+2. **Data Reconstruction:** Re-creates the `test_dataloader` from the split directory.
+3. **Inference:** Loads the saved model weights and evaluates metrics.
+4. **Monitoring:** Visualizes logs via TensorBoard (local or Ngrok).
 
 **Inference Example:**
+
 ```python
 import torch
 import torch.nn as nn
@@ -144,9 +160,9 @@ vis_utils.evaluate_best_model(model=best_model,
                               device=device)
 ```
 
-## Monitoring Options:
+## Monitoring Options
 
-**1. Remote (via Ngrok)**
+### 1. Remote (via Ngrok)
 
 Best for Google Colab / Kaggle environments.
 
@@ -180,14 +196,16 @@ subprocess.Popen(
 )
 ```
 
-**2. Local (via CLI)**
+### 2. Local (via CLI)
 
 Best if you downloaded the logs to your local machine.
 
 Open your terminal/command prompt and run:
+
 ```bash
 tensorboard --logdir="path/to/downloaded/runs" --port 6006
 ```
+
 Then open your browser at `http://localhost:6006`.
 
 ## Results
@@ -203,18 +221,20 @@ Then open your browser at `http://localhost:6006`.
 *(Fig 1. Confusion Matrix and ROC curve for ViT)*
 
 ## Analysis & Key Observations
-1.  **Vision Transformer (ViT) Superiority:**
-    - ViT achieved the highest accuracy (**92.66%**) and generalization. 
+
+1. **Vision Transformer (ViT) Superiority:**
+    - ViT achieved the highest accuracy (**92.66%**) and generalization.
     - **Why?** The **Self-Attention mechanism** allows the model to capture global context immediately, focusing on hand structure while ignoring complex backgrounds more effectively than the CNN baselines.
 
-2.  **Impact of Strong Regularization (ResNet/Inception):**
+2. **Impact of Strong Regularization (ResNet/Inception):**
     - Both ResNet and Inception exhibited an interesting phenomenon where **Test Accuracy (~80%) exceeded Training Accuracy (~61%)**.
     - **Root Cause:** This suggests that the **Data Augmentation strategy** (e.g., Random Erasing, Rotation) and **Dropout** layers made the training task significantly harder than the inference task. The models learned robust features from the difficult training samples, performing exceptionally well on the "clean" test data.
 
-3.  **VGG Convergence Failure:**
-    - The custom VGG model trained from scratch failed to converge (11% accuracy). 
+3. **VGG Convergence Failure:**
+    - The custom VGG model trained from scratch failed to converge (11% accuracy).
     - **Insight:** This highlights the difficulty of training deep CNNs on limited data without **Pre-trained Weights (Transfer Learning)** or advanced normalization techniques.
 
 ## Contact
-- **LinkedIn:** https://www.linkedin.com/in/mazenh-elhusseiny/
-- **Email:** mazenh.elhusseiny@gmail.com
+
+- [LinkedIn](https://www.linkedin.com/in/mazenh-elhusseiny/)
+- [Email](mazenh.elhusseiny@gmail.com)
