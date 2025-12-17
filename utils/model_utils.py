@@ -3,7 +3,7 @@ from torch import nn
 from typing import Tuple
 import torchvision.models as models
 import warnings
-import vgg
+from utils import vgg
 
 warnings.filterwarnings("ignore")
 device = "cuda" if torch.cuda.is_available() else "cpu"

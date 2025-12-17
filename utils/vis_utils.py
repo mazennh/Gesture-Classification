@@ -5,7 +5,7 @@ import os
 from typing import List
 import random
 import math
-from train_utils import test_step
+from utils.train_utils import test_step
 from sklearn.metrics import classification_report
 import seaborn as sns
 from torchmetrics import (MetricCollection,
