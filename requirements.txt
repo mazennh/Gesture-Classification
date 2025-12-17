@@ -9,5 +9,3 @@ tqdm==4.67.1
 split-folders
 pyngrok
 protobuf<=3.20.1
-
-#tensorboard --logdir="Path To Your Logs For Model(n)" --port 6006
