@@ -10,6 +10,6 @@ venv/
 env/
 .env
 
-# IDE settings
+## IDE settings
 .vscode/
 .idea/
