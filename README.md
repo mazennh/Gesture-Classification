@@ -38,7 +38,6 @@ cd Gesture-Classification
 pip install -r requirements.txt
 ```
 **3. Path Setup (For Notebooks/Colab)**
-Since the code is modular, ensure the root directory is added to the system path:
 ```python
 import sys
 import os
@@ -46,7 +45,7 @@ sys.path.append(os.path.abspath("/path/to/Gesture-Classification"))
 ```
 
 ## Usage Workflow
-**Phase 1: Training Pipeline**
+**1. Training Pipeline**
 
 The training process handles data engineering (filtering/splitting) and model optimization.
 
@@ -104,8 +103,8 @@ train_utils.train(
     best_model='vgg_best.pth'
 )
 ```
+**2. Testing & Monitoring Pipeline**
 
-### Phase 2: Testing & Monitoring Pipeline
 The testing pipeline is designed to run on **deployment artifacts** (zipped weights and logs).
 
  It reconstructs the test environment to verify performance.
@@ -145,9 +144,9 @@ vis_utils.evaluate_best_model(model=best_model,
                               device=device)
 ```
 
-**Monitoring Options:**
+## Monitoring Options:
 
-**Option A: Remote (via Ngrok)**
+**1. Remote (via Ngrok)**
 
 Best for Google Colab / Kaggle environments.
 
@@ -181,7 +180,7 @@ subprocess.Popen(
 )
 ```
 
-**Option B: Local (via CLI)**
+**2. Local (via CLI)**
 
 Best if you downloaded the logs to your local machine.
 
