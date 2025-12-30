@@ -4,6 +4,7 @@ from typing import Tuple
 import torchvision.models as models
 import warnings
 from utils import vgg
+from transformers import ViTForImageClassification, ViTConfig 
 
 warnings.filterwarnings("ignore")
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -83,15 +84,19 @@ def get_model(num_classes: int,
 
     # --- VISION TRANSFORMER (ViT) ---
     elif architecture_name == 'ViT':
-        print("Loading ViT-B/16...")
-        weights = models.ViT_B_16_Weights.DEFAULT
-        model = models.vit_b_16(weights=weights)
+        print("Loading ViT-B/16 from Hugging Face...")
         
-        for param in model.parameters():
+        model = ViTForImageClassification.from_pretrained(
+            "google/vit-base-patch16-224",
+            num_labels=num_classes,
+            ignore_mismatched_sizes=True
+        )
+        
+        for param in model.vit.parameters():
             param.requires_grad = False
-    
-        in_features = model.heads.head.in_features
-        model.heads = _create_custom_head(in_features, num_classes)
+            
+        in_features = model.config.hidden_size
+        model.classifier = _create_custom_head(in_features, num_classes)
 
     # --- VGG ---
     elif architecture_name == 'VGG':
