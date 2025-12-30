@@ -41,7 +41,8 @@ def train_step(model: torch.nn.Module,
         X, y = X.to(device), y.to(device)
 
         # 1. Forward pass
-        y_logits = model(X)
+        output = model(X)
+        y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
         loss = loss_fn(y_logits, y)
 
         # 2. Predictions
@@ -94,7 +95,8 @@ def test_step(dataloader: torch.utils.data.DataLoader,
             X, y = X.to(device), y.to(device)
 
             # 1. Forward pass
-            y_logits = model(X) # Shape: [Batch_Size, Num_Classes]
+            output = model(X)
+            y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
             loss = loss_fn(y_logits, y)
 
             # 2. Predictions
