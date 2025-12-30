@@ -1,6 +1,7 @@
 import torch
 from typing import Dict, Optional
 from tqdm import tqdm
+from huggingface_hub import HfApi
 from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, F1Score
@@ -41,7 +42,7 @@ def train_step(model: torch.nn.Module,
         X, y = X.to(device), y.to(device)
 
         # 1. Forward pass
-        output = model(X)
+        outputs = model(X)
         y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
         loss = loss_fn(y_logits, y)
 
@@ -95,7 +96,7 @@ def test_step(dataloader: torch.utils.data.DataLoader,
             X, y = X.to(device), y.to(device)
 
             # 1. Forward pass
-            output = model(X)
+            outputs = model(X)
             y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
             loss = loss_fn(y_logits, y)
 
@@ -130,6 +131,7 @@ def train(model: torch.nn.Module,
           num_classes: int,
           best_model: str,
           experiment_name: str,
+          repo_id: str,
           scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
           device: torch.device = "cpu",
           patience: int = 5,
@@ -248,12 +250,28 @@ def train(model: torch.nn.Module,
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), best_model_path)
-            print("Best Model Saved...")
-        else:
-            counter += 1
-            if counter >= patience:
-                print(f"Early stopping triggered at epoch {epoch+1}")
+            
+            # 1. Save locally (as usual)
+            torch.save(model.state_dict(), best_model)
+            print("Best Model Saved locally...")
+
+            # 2. Upload to Hugging Face
+            try:
+                print(f"Uploading Best Model to Hugging Face: {repo_id}...")
+                if hasattr(model, "save_pretrained"):
+                    model.save_pretrained(f"{best_model}")
+                    model.push_to_hub(repo_id)
+                  
+                else:
+                    api = HfApi()
+                    api.upload_file(
+                        path_or_fileobj=best_model,
+                        path_in_repo=f"{best_model}.pth",
+                        repo_id=repo_id
+                    )
+                print("Uploaded Successful!")
+            except Exception as e:
+                print(f"Failed To Upload: {e}")
                 break
 
     writer.close()
