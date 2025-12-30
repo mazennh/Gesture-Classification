@@ -1,11 +1,3 @@
-matplotlib
-Pillow<10.0.0
-scikit-learn
-seaborn
-torch
-torchmetrics
-torchvision
-tqdm
 split-folders
 pyngrok
 protobuf<=3.20.1
