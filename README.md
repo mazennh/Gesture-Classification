@@ -26,8 +26,8 @@ The system is designed with **MLOps best practices**:
 │   ├── model_utils.py   # Model factory (VGG, ViT, ResNet, Inception)
 │   ├── train_utils.py   # Training loop, checkpoints, and early stopping
 │   └── vis_utils.py     # Data sanity checks, augmentation debugging, and evaluation metrics
+│   └── vgg.py           # Custom VGG implementation
 ├── tensorboard_logs/    # Training logs
-├── vgg.py               # Custom VGG implementation
 └── requirements.txt     # Dependencies
 ```
 
@@ -44,7 +44,7 @@ cd Gesture-Classification
 
 ```bash
 pip
- install -r requirements.txt
+install -r requirements.txt
 ```
 
 ### 3. Path Setup (For Notebooks/Colab)
@@ -111,6 +111,7 @@ train_utils.train(
     epochs=20,
     device=device,
     patience=5,
+    repo_id = "Your_HF_Repo",
     scheduler=scheduler,
     experiment_name='vgg_run_1',
     best_model='vgg_best.pth'
