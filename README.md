@@ -25,7 +25,7 @@ The system is designed with **MLOps best practices**:
 │   ├── data_utils.py    # Data ingestion, filtering, and DataLoader creation
 │   ├── model_utils.py   # Model factory (VGG, ViT, ResNet, Inception)
 │   ├── train_utils.py   # Training loop, checkpoints, and early stopping
-│   └── vis_utils.py     # Data sanity checks, augmentation debugging, and evaluation metrics
+│   ├── vis_utils.py     # Data sanity checks, augmentation debugging, and evaluation metrics
 │   └── vgg.py           # Custom VGG implementation
 ├── tensorboard_logs/    # Training logs
 └── requirements.txt     # Dependencies
@@ -83,6 +83,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 data_utils.filter_data(
     input_path='/path/to/raw_data',
     output_path='/path/to/filtered_data',
+    split_path = '/path/to/split_data',
+    seed = 42,
     classes_list=["stop", "like", "dislike", ...],
     split_ratio=(0.8, 0.1, 0.1)
 )
@@ -98,7 +100,7 @@ model, name = model_utils.get_model(model_name='vgg', num_classes=len(class_name
 
 # 4. Define Hyperparameters
 loss_fn = nn.CrossEntropyLoss()
-optimizer = Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
 scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
 # 5. Train
@@ -108,6 +110,7 @@ train_utils.train(
     val_dataloader=val_dl,
     optimizer=optimizer,
     loss_fn=loss_fn,
+    num_classes = len(class_names),
     epochs=20,
     device=device,
     patience=5,
