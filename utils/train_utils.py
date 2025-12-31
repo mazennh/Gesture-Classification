@@ -246,33 +246,36 @@ def train(model: torch.nn.Module,
             else:
                 scheduler.step()
 
-        # 5. Early Stopping
+        # 5. Early Stopping & Saving
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
             
-            # 1. Save locally (as usual)
+            # Save locally
             torch.save(model.state_dict(), best_model)
-            print("Best Model Saved locally...")
+            print(f"New best model saved: {val_loss:.4f}")
 
-            # 2. Upload to Hugging Face
+            # Upload to Hugging Face
             try:
-                print(f"Uploading Best Model to Hugging Face: {repo_id}...")
-                if hasattr(model, "save_pretrained"):
-                    model.save_pretrained(f"{best_model}")
+                # Only use HF-specific methods if the model supports them (like ViT)
+                if hasattr(model, "push_to_hub"):
                     model.push_to_hub(repo_id)
-                  
                 else:
+                    # For standard PyTorch models (ResNet, etc)
                     api = HfApi()
                     api.upload_file(
                         path_or_fileobj=best_model,
                         path_in_repo=f"{best_model}.pth",
                         repo_id=repo_id
                     )
-                print("Uploaded Successful!")
+                print("Uploaded to Hugging Face successfully.")
             except Exception as e:
-                print(f"Failed To Upload: {e}")
-                break
+                print(f"HF Upload failed (training will continue): {e}")
+        else:
+            counter += 1
+            if counter >= patience:
+                print(f"Early stopping triggered. No improvement for {patience} epochs.")
+                break # Exit the training loop
 
     writer.close()
     return history
