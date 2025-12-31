@@ -261,7 +261,7 @@ def train(model: torch.nn.Module,
                     api = HfApi()
                     api.upload_file(
                         path_or_fileobj=best_model,
-                        path_in_repo=f"{best_model}.pth",
+                        path_in_repo=best_model,
                         repo_id=repo_id
                     )
                 print("Uploaded to Hugging Face successfully.")
