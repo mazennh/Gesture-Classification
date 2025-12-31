@@ -43,8 +43,7 @@ cd Gesture-Classification
 ### 2. Install Dependencies
 
 ```bash
-pip
-install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3. Path Setup (For Notebooks/Colab)
@@ -96,7 +95,7 @@ train_dl, val_dl, test_dl, _, class_names, _ = data_utils.create_dataloaders(
 )
 
 # 3. Initialize Model (e.g., VGG, ViT, ResNet)
-model, name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
+model, architecture_name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
 
 # 4. Define Hyperparameters
 loss_fn = nn.CrossEntropyLoss()
@@ -116,8 +115,8 @@ train_utils.train(
     patience=5,
     repo_id = "Your_HF_Repo",
     scheduler=scheduler,
-    experiment_name='vgg_run_1',
-    best_model='vgg_best.pth'
+    experiment_name=architecture_name,
+    best_model=f"{architecture_name}.pth"
 )
 ```
 
@@ -146,14 +145,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # 1. Setup DataLoaders
 dls = data_utils.create_dataloaders(
-    data_dir="/path/to/unzipped_data/splited_data",
+    data_dir="/path/to/split_data",
     batch_size=32
 )
 _, _, test_dataloader, _, class_names, _ = dls
 
 # 2. Load Model Architecture & Weights
-best_model, _ = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
-best_model.load_state_dict(torch.load('/path/to/unzipped_data/best_model.pth'))
+best_model, architecture_name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
+best_model.load_state_dict(torch.load(f'/path/to/{architecture_name}.pth'))
 
 # 3. Evaluate
 loss_fn = nn.CrossEntropyLoss()
