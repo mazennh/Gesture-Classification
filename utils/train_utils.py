@@ -116,7 +116,7 @@ def test_step(dataloader: torch.utils.data.DataLoader,
     
     results = metrics.compute()
 
-    # Concatenate all batches into one long tensor
+    # Concatenate all batches
     y_pred_tensor = torch.cat(y_preds).long()
     y_true_tensor = torch.cat(y_targets).long()
     y_prob_tensor = torch.cat(y_probs).float()
@@ -203,7 +203,6 @@ def train(model: torch.nn.Module,
                                             metrics=val_metrics,
                                             device=device)
 
-        # Extract values for logging
         train_acc = train_res['acc'].item() * 100
         train_f1  = train_res['f1'].item() * 100
         train_rec = train_res['rec'].item() * 100
@@ -214,7 +213,7 @@ def train(model: torch.nn.Module,
         val_rec = val_res['rec'].item() * 100
         val_f1  = val_res['f1'].item() * 100
 
-        # --- TensorBoard Logging ---
+        # TensorBoard Logging
         writer.add_scalars('Loss', {'Train': train_loss, 'Val': val_loss}, epoch)
         writer.add_scalars('Accuracy', {'Train': train_acc, 'Val': val_acc}, epoch)
         writer.add_scalars('F1_Score', {'Train': train_f1, 'Val': val_f1}, epoch)
@@ -240,7 +239,6 @@ def train(model: torch.nn.Module,
 
         # 4. Learning Rate Scheduler
         if scheduler is not None:
-            # If using ReduceLROnPlateau, we must pass the validation loss
             if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step(val_loss)
             else:
@@ -257,11 +255,9 @@ def train(model: torch.nn.Module,
 
             # Upload to Hugging Face
             try:
-                # Only use HF-specific methods if the model supports them (like ViT)
                 if hasattr(model, "push_to_hub"):
                     model.push_to_hub(repo_id)
                 else:
-                    # For standard PyTorch models (ResNet, etc)
                     api = HfApi()
                     api.upload_file(
                         path_or_fileobj=best_model,
@@ -275,7 +271,7 @@ def train(model: torch.nn.Module,
             counter += 1
             if counter >= patience:
                 print(f"Early stopping triggered. No improvement for {patience} epochs.")
-                break # Exit the training loop
+                break
 
     writer.close()
     return history
