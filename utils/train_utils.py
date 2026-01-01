@@ -131,6 +131,7 @@ def train(model: torch.nn.Module,
           num_classes: int,
           best_model: str,
           experiment_name: str,
+          token: str,
           repo_id: str,
           scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
           device: torch.device = "cpu",
@@ -147,6 +148,8 @@ def train(model: torch.nn.Module,
         val_dataloader: DataLoader for testing/validation data.
         optimizer: Optimizer (e.g. SGD, Adam).
         loss_fn: Loss function (e.g. BCEWithLogitsLoss).
+        repo_id: Your hugging face repo to save the model
+        token: Your hugging face token
         scheduler: Learning rate scheduler (optional). Defaults to None.
         device: Target device (e.g. 'cuda', 'cpu'). Defaults to 'cpu'.
         epochs: Number of training epochs. Defaults to 5.
@@ -251,14 +254,18 @@ def train(model: torch.nn.Module,
             
             # Save locally
             torch.save(model.state_dict(), best_model)
-            print(f"New best model saved: {val_loss:.4f}")
+            print("Best Model Saved")
 
             # Upload to Hugging Face
             try:
+              
+                api = HfApi(token=token)
+                api.create_repo(repo_id=repo_id, exist_ok=True)
+                            
                 if hasattr(model, "push_to_hub"):
-                    model.push_to_hub(repo_id)
+                    model.push_to_hub(repo_id,token=token)
                 else:
-                    api = HfApi()
+                    
                     api.upload_file(
                         path_or_fileobj=best_model,
                         path_in_repo=best_model,
