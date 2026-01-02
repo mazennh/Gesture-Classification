@@ -25,9 +25,9 @@ The system is designed with **MLOps best practices**:
 │   ├── data_utils.py    # Data ingestion, filtering, and DataLoader creation
 │   ├── model_utils.py   # Model factory (VGG, ViT, ResNet, Inception)
 │   ├── train_utils.py   # Training loop, checkpoints, and early stopping
-│   └── vis_utils.py     # Data sanity checks, augmentation debugging, and evaluation metrics
+│   ├── vis_utils.py     # Data sanity checks, augmentation debugging, and evaluation metrics
+│   └── vgg.py           # Custom VGG implementation
 ├── tensorboard_logs/    # Training logs
-├── vgg.py               # Custom VGG implementation
 └── requirements.txt     # Dependencies
 ```
 
@@ -43,8 +43,7 @@ cd Gesture-Classification
 ### 2. Install Dependencies
 
 ```bash
-pip
- install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3. Path Setup (For Notebooks/Colab)
@@ -83,6 +82,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 data_utils.filter_data(
     input_path='/path/to/raw_data',
     output_path='/path/to/filtered_data',
+    split_path = '/path/to/split_data',
+    seed = 42,
     classes_list=["stop", "like", "dislike", ...],
     split_ratio=(0.8, 0.1, 0.1)
 )
@@ -94,11 +95,11 @@ train_dl, val_dl, test_dl, _, class_names, _ = data_utils.create_dataloaders(
 )
 
 # 3. Initialize Model (e.g., VGG, ViT, ResNet)
-model, name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
+model, architecture_name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
 
 # 4. Define Hyperparameters
 loss_fn = nn.CrossEntropyLoss()
-optimizer = Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
 scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
 # 5. Train
@@ -108,12 +109,14 @@ train_utils.train(
     val_dataloader=val_dl,
     optimizer=optimizer,
     loss_fn=loss_fn,
+    num_classes = len(class_names),
     epochs=20,
     device=device,
     patience=5,
+    repo_id = "Your_HF_Repo",
     scheduler=scheduler,
-    experiment_name='vgg_run_1',
-    best_model='vgg_best.pth'
+    experiment_name=architecture_name,
+    best_model=f"{architecture_name}.pth"
 )
 ```
 
@@ -142,14 +145,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # 1. Setup DataLoaders
 dls = data_utils.create_dataloaders(
-    data_dir="/path/to/unzipped_data/splited_data",
+    data_dir="/path/to/split_data",
     batch_size=32
 )
 _, _, test_dataloader, _, class_names, _ = dls
 
 # 2. Load Model Architecture & Weights
-best_model, _ = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
-best_model.load_state_dict(torch.load('/path/to/unzipped_data/best_model.pth'))
+best_model, architecture_name = model_utils.get_model(model_name='vgg', num_classes=len(class_names), device=device)
+best_model.load_state_dict(torch.load(f'/path/to/{architecture_name}.pth'))
 
 # 3. Evaluate
 loss_fn = nn.CrossEntropyLoss()

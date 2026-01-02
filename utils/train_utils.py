@@ -1,6 +1,7 @@
 import torch
 from typing import Dict, Optional
 from tqdm import tqdm
+from huggingface_hub import HfApi
 from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, F1Score
@@ -41,7 +42,8 @@ def train_step(model: torch.nn.Module,
         X, y = X.to(device), y.to(device)
 
         # 1. Forward pass
-        y_logits = model(X)
+        outputs = model(X)
+        y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
         loss = loss_fn(y_logits, y)
 
         # 2. Predictions
@@ -94,7 +96,8 @@ def test_step(dataloader: torch.utils.data.DataLoader,
             X, y = X.to(device), y.to(device)
 
             # 1. Forward pass
-            y_logits = model(X) # Shape: [Batch_Size, Num_Classes]
+            outputs = model(X)
+            y_logits = outputs.logits if hasattr(outputs, "logits") else outputs
             loss = loss_fn(y_logits, y)
 
             # 2. Predictions
@@ -113,7 +116,7 @@ def test_step(dataloader: torch.utils.data.DataLoader,
     
     results = metrics.compute()
 
-    # Concatenate all batches into one long tensor
+    # Concatenate all batches
     y_pred_tensor = torch.cat(y_preds).long()
     y_true_tensor = torch.cat(y_targets).long()
     y_prob_tensor = torch.cat(y_probs).float()
@@ -128,6 +131,8 @@ def train(model: torch.nn.Module,
           num_classes: int,
           best_model: str,
           experiment_name: str,
+          token: str,
+          repo_id: str,
           scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
           device: torch.device = "cpu",
           patience: int = 5,
@@ -143,6 +148,8 @@ def train(model: torch.nn.Module,
         val_dataloader: DataLoader for testing/validation data.
         optimizer: Optimizer (e.g. SGD, Adam).
         loss_fn: Loss function (e.g. BCEWithLogitsLoss).
+        repo_id: Your hugging face repo to save the model
+        token: Your hugging face token
         scheduler: Learning rate scheduler (optional). Defaults to None.
         device: Target device (e.g. 'cuda', 'cpu'). Defaults to 'cpu'.
         epochs: Number of training epochs. Defaults to 5.
@@ -199,7 +206,6 @@ def train(model: torch.nn.Module,
                                             metrics=val_metrics,
                                             device=device)
 
-        # Extract values for logging
         train_acc = train_res['acc'].item() * 100
         train_f1  = train_res['f1'].item() * 100
         train_rec = train_res['rec'].item() * 100
@@ -210,7 +216,7 @@ def train(model: torch.nn.Module,
         val_rec = val_res['rec'].item() * 100
         val_f1  = val_res['f1'].item() * 100
 
-        # --- TensorBoard Logging ---
+        # TensorBoard Logging
         writer.add_scalars('Loss', {'Train': train_loss, 'Val': val_loss}, epoch)
         writer.add_scalars('Accuracy', {'Train': train_acc, 'Val': val_acc}, epoch)
         writer.add_scalars('F1_Score', {'Train': train_f1, 'Val': val_f1}, epoch)
@@ -236,22 +242,42 @@ def train(model: torch.nn.Module,
 
         # 4. Learning Rate Scheduler
         if scheduler is not None:
-            # If using ReduceLROnPlateau, we must pass the validation loss
             if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step(val_loss)
             else:
                 scheduler.step()
 
-        # 5. Early Stopping
+        # 5. Early Stopping & Saving
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), best_model_path)
-            print("Best Model Saved...")
+            
+            # Save locally
+            torch.save(model.state_dict(), best_model)
+            print("Best Model Saved")
+
+            # Upload to Hugging Face
+            try:
+              
+                api = HfApi(token=token)
+                api.create_repo(repo_id=repo_id, exist_ok=True)
+                            
+                if hasattr(model, "push_to_hub"):
+                    model.push_to_hub(repo_id,token=token)
+                else:
+                    
+                    api.upload_file(
+                        path_or_fileobj=best_model,
+                        path_in_repo=best_model,
+                        repo_id=repo_id
+                    )
+                print("Uploaded to Hugging Face successfully.")
+            except Exception as e:
+                print(f"HF Upload failed (training will continue): {e}")
         else:
             counter += 1
             if counter >= patience:
-                print(f"Early stopping triggered at epoch {epoch+1}")
+                print(f"Early stopping triggered. No improvement for {patience} epochs.")
                 break
 
     writer.close()
