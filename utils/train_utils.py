@@ -133,6 +133,7 @@ def train(model: torch.nn.Module,
           experiment_name: str,
           token: str,
           repo_id: str,
+          processor: Optional[object] = None,
           scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
           device: torch.device = "cpu",
           patience: int = 5,
@@ -164,9 +165,13 @@ def train(model: torch.nn.Module,
                     optimizer=optimizer,
                     loss_fn=loss_fn,
                     num_classes = 9,
+                    best_model = "model_name.pth",
                     scheduler=scheduler,
                     device=device,
                     patience=10,
+                    token="YOUR_HF_TOKEN",
+                    repo_id="YOUR_HF_REPO_ID",
+                    processor=None,
                     experiment_name = "My_Experiment",
                     epochs=100)
     """
@@ -264,6 +269,8 @@ def train(model: torch.nn.Module,
                             
                 if hasattr(model, "push_to_hub"):
                     model.push_to_hub(repo_id,token=token)
+                    if processor:
+                        processor.push_to_hub(repo_id, token=token)
                 else:
                     
                     api.upload_file(

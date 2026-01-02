@@ -4,7 +4,7 @@ from typing import Tuple
 import torchvision.models as models
 import warnings
 from utils import vgg
-from transformers import ViTForImageClassification, ViTConfig 
+from transformers import ViTForImageClassification, ViTImageProcessor 
 
 warnings.filterwarnings("ignore")
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -85,7 +85,8 @@ def get_model(num_classes: int,
     # --- VISION TRANSFORMER (ViT) ---
     elif architecture_name == 'ViT':
         print("Loading ViT-B/16 from Hugging Face...")
-        
+
+        processor = ViTImageProcessor.from_pretrained("google/vit-base-patch16-224")
         model = ViTForImageClassification.from_pretrained(
             "google/vit-base-patch16-224",
             num_labels=num_classes,
@@ -108,4 +109,4 @@ def get_model(num_classes: int,
     else:
         raise ValueError(f"Model '{architecture_name}' is not supported. Choose: ResNet, Inception V1, ViT, VGG.")
         
-    return model.to(device), architecture_name
+    return model.to(device), architecture_name, processor if architecture_name == 'ViT' else None
